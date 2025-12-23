@@ -7,6 +7,10 @@ class IDatabaseConnector(ABC):
     Follows Interface Segregation: Keep it focused on execution.
     """
     @abstractmethod
+    def __init__(self, connection_string: str):
+        pass
+
+    @abstractmethod
     def get_schema(self) -> str:
         """Returns the schema description for the LLM."""
         pass
@@ -17,4 +21,9 @@ class IDatabaseConnector(ABC):
         Executes SQL and yields results row by row.
         Memory efficient handle (Iterator).
         """
+        pass
+
+    @abstractmethod
+    def execute_ddl(self, query: str) -> None:
+        """Executes DDL statements like CREATE, INSERT, etc."""
         pass

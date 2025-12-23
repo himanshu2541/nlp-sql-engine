@@ -11,9 +11,17 @@ class Settings(BaseSettings):
     DEBUG: bool = ENVIRONMENT == "development"
     LOG_LEVEL: str = "DEBUG" if DEBUG else "INFO"
 
-    # Database Settings
-
-
-    # Database connection string
+    # LLM Settings
+    LLM_PROVIDER: str = "local"  # Options: openai, local, mock
+    LLM_MODEL_NAME: str = "phi-3-mini-4k-instruct"  # e.g., gpt-3.5-turbo, phi3-mini
+    LLM_BASE_URL: Optional[str] = "http://localhost:1234/v1"  # Base URL for self-hosted LLMs
+    LLM_TEMPERATURE: float = 0.0 # SQL should be deterministic 
+    LLM_API_KEY: Optional[str] = None  # For providers that need API keys
+    
+    # Embedding Settings
+    EMBEDDING_PROVIDER: str = "local"  # Options: openai, huggingface, local, mock
+    EMBEDDING_MODEL_NAME: str = "text-embedding-nomic-embed-text-v1.5"  # or text-embedding-ada-002
+    EMBEDDING_BASE_URL: Optional[str] = "http://localhost:1234/v1"  # Base URL for embedding API if needed
+    EMBEDDING_API_KEY: Optional[str] = None  # For providers that need API keys
 
 settings = Settings()

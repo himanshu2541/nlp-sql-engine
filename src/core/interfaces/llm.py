@@ -1,17 +1,15 @@
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, List, Tuple
 from config.settings import Settings
+
 
 class ILLMProvider(ABC):
     """Interface for any Large Language Model."""
 
     @abstractmethod
-    def create_llm(self, settings: Settings) -> Any:
-        """
-        Creates and returns configured LLM object (e.g., ChatOpenAI)
-        """
+    def __init__(self, settings: Settings):
         pass
-    
+
     @abstractmethod
-    def generate_sql(self, system_prompt: str, user_prompt: str) -> str:
+    def invoke(self, messages: List[Tuple[str, str]]) -> str:
         pass
