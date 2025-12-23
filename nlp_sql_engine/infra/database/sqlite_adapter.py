@@ -1,7 +1,7 @@
 import sqlite3
 from typing import Generator, Any
-from src.core.interfaces.db import IDatabaseConnector
-from src.app.registries import ProviderRegistry
+from nlp_sql_engine.core.interfaces.db import IDatabaseConnector
+from nlp_sql_engine.app.registry import ProviderRegistry
 
 
 @ProviderRegistry.register_db("sqlite")

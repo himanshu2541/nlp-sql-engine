@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Any, List, Tuple
-from config.settings import Settings
-
+from nlp_sql_engine.config.settings import Settings
 
 class ILLMProvider(ABC):
     """Interface for any Large Language Model."""

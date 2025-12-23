@@ -1,12 +1,16 @@
 from abc import ABC, abstractmethod
 from typing import List
-from config.settings import Settings
+from nlp_sql_engine.config.settings import Settings
 
 class IEmbeddingProvider(ABC):
     """
     Interface for Embedding Models.
     Responsibility: Convert text strings into vector representations (lists of floats).
     """
+
+    @abstractmethod
+    def __init__(self, settings: Settings):
+        pass
 
     @abstractmethod
     def embed_query(self, text: str) -> List[float]:

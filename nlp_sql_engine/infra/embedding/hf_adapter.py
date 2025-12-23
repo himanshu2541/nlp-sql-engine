@@ -1,7 +1,7 @@
 from typing import List
-from config.settings import Settings
-from src.core.interfaces.embedding import IEmbeddingProvider
-from src.app.registries import ProviderRegistry
+from nlp_sql_engine.config.settings import Settings
+from nlp_sql_engine.core.interfaces.embedding import IEmbeddingProvider
+from nlp_sql_engine.app.registry import ProviderRegistry
 from langchain_huggingface import HuggingFaceEmbeddings
 import logging
 

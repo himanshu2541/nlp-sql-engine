@@ -24,4 +24,8 @@ class Settings(BaseSettings):
     EMBEDDING_BASE_URL: Optional[str] = "http://localhost:1234/v1"  # Base URL for embedding API if needed
     EMBEDDING_API_KEY: Optional[str] = None  # For providers that need API keys
 
+    # Database Settings
+    DB_TYPE: str = "sqlite"  # Options: sqlite, postgresql, mysql, etc.
+    DB_CONNECTION_STRING: str = ":memory:"  # e.g., sqlite:///./test.db or postgresql://user:pass@localhost/dbname
+    
 settings = Settings()

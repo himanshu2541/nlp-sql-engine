@@ -1,7 +1,7 @@
 from typing import Any, List, Tuple, cast
-from config.settings import Settings
-from src.core.interfaces.llm import ILLMProvider
-from src.app.registries import ProviderRegistry
+from nlp_sql_engine.config.settings import Settings
+from nlp_sql_engine.core.interfaces.llm import ILLMProvider
+from nlp_sql_engine.app.registry import ProviderRegistry
 
 from langchain_openai import ChatOpenAI
 from langchain.chat_models import BaseChatModel
