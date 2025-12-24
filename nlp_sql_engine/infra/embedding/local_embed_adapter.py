@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 @ProviderRegistry.register_embedding("local")
 class LocalEmbeddingAdapter(IEmbeddingProvider):
     def __init__(self, settings: Settings):
-        self.api_key = getattr(settings, "EMBEDDING_API_KEY", None)
+        self.api_key = getattr(settings, "EMBEDDING_API_KEY", "type-anything-here")
         self.model = getattr(settings, "EMBEDDING_MODEL_NAME", "")
         self.base_url = getattr(settings, "EMBEDDING_BASE_URL", None)
 

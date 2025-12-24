@@ -16,16 +16,16 @@ class Settings(BaseSettings):
     LLM_MODEL_NAME: str = "phi-3-mini-4k-instruct"  # e.g., gpt-3.5-turbo, phi3-mini
     LLM_BASE_URL: Optional[str] = "http://localhost:1234/v1"  # Base URL for self-hosted LLMs
     LLM_TEMPERATURE: float = 0.0 # SQL should be deterministic 
-    LLM_API_KEY: Optional[str] = None  # For providers that need API keys
+    LLM_API_KEY: str = "type-anything-here"  # For providers that need API keys
     
     # Embedding Settings
     EMBEDDING_PROVIDER: str = "local"  # Options: openai, huggingface, local, mock
     EMBEDDING_MODEL_NAME: str = "text-embedding-nomic-embed-text-v1.5"  # or text-embedding-ada-002
     EMBEDDING_BASE_URL: Optional[str] = "http://localhost:1234/v1"  # Base URL for embedding API if needed
-    EMBEDDING_API_KEY: Optional[str] = None  # For providers that need API keys
+    EMBEDDING_API_KEY: str = "type-anything-here"  # For providers that need API keys
 
     # Database Settings
     DB_TYPE: str = "sqlite"  # Options: sqlite, postgresql, mysql, etc.
-    DB_CONNECTION_STRING: str = ":memory:"  # e.g., sqlite:///./test.db or postgresql://user:pass@localhost/dbname
+    DB_CONNECTION_STRING: str = "commerce.db"  # e.g., sqlite:///./test.db or postgresql://user:pass@localhost/dbname
     
 settings = Settings()

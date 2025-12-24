@@ -3,6 +3,7 @@ from typing import Generator, Any, List
 from nlp_sql_engine.core.interfaces.db import IDatabaseConnector
 from nlp_sql_engine.app.registry import ProviderRegistry
 
+
 @ProviderRegistry.register_db("sqlite")
 class SQLiteAdapter(IDatabaseConnector):
     def __init__(self, connection_string: str):
@@ -17,18 +18,18 @@ class SQLiteAdapter(IDatabaseConnector):
 
     def get_table_schema(self, table_name: str) -> str:
         """
-        Fetches schema for a SINGLE table. 
+        Fetches schema for a SINGLE table.
         Used by the Router to retrieve details only for relevant tables.
         """
         self._connect()
         assert self.conn is not None
         cursor = self.conn.cursor()
-        
+
         # Safe formatting for table name (PRAGMA statements don't support standard parameter substitution)
         # In production, Validate table_name strictly to prevent injection.
         cursor.execute(f"PRAGMA table_info({table_name});")
         columns = cursor.fetchall()
-        
+
         if not columns:
             return ""
 
@@ -36,7 +37,18 @@ class SQLiteAdapter(IDatabaseConnector):
         for col in columns:
             # col[1] is name, col[2] is type
             schema += f"  {col[1]} {col[2]}\n"
-        
+
+        # Get Foreign Keys
+        # Output: (id, seq, table, from, to, on_update, on_delete, match)
+        cursor.execute(f"PRAGMA foreign_key_list({table_name});")
+        fks = cursor.fetchall()
+
+        if fks:
+            schema += "  -- Relationships --\n"
+            for fk in fks:
+                # fk[3]=local_col, fk[2]=target_table, fk[4]=target_col
+                schema += f"  FOREIGN KEY ({fk[3]}) REFERENCES {fk[2]}({fk[4]})\n"
+
         return schema.strip()
 
     def get_all_table_names(self) -> List[str]:
@@ -50,7 +62,7 @@ class SQLiteAdapter(IDatabaseConnector):
 
     def get_schema(self) -> str:
         """
-        Returns the FULL schema. 
+        Returns the FULL schema.
         Note: In Phase 2, try to use get_table_schema with the Router instead of this.
         """
         tables = self.get_all_table_names()
@@ -68,7 +80,7 @@ class SQLiteAdapter(IDatabaseConnector):
         assert self.conn is not None
         cursor = self.conn.cursor()
         cursor.execute(query)
-        
+
         while True:
             row = cursor.fetchone()
             if row is None:
