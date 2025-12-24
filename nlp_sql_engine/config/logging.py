@@ -7,10 +7,22 @@ def setup_logging():
     Configures the root logger for the application.
     """
     logging.basicConfig(
-        level="DEBUG" if settings.DEBUG else "INFO",
+        level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         handlers=[logging.StreamHandler(sys.stdout)],
     )
 
-    logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
-    logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+    if settings.DEBUG:
+        logging.getLogger("nlp_sql_engine").setLevel(logging.DEBUG)
+    
+    noisy_libs = [
+        "httpcore",
+        "httpx",
+        "openai",
+        "urllib3",
+        "uvicorn.access",
+        "uvicorn.error"
+    ]
+
+    for lib in noisy_libs:
+        logging.getLogger(lib).setLevel(logging.WARNING)

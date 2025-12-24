@@ -3,6 +3,8 @@ from typing import List, Dict, Any
 from ..core.interfaces.db import IDatabaseConnector
 from ..core.interfaces.embedding import IEmbeddingProvider
 
+import logging
+logger = logging.getLogger(__name__)
 class SchemaRouter:
     """
     Responsibility: Select only the relevant tables for a given user query.
@@ -72,7 +74,7 @@ class SchemaRouter:
         scores.sort(key=lambda x: x[0], reverse=True)
         top_tables = [name for _, name in scores[:top_k]]
         
-        print(f"[Router] Selected tables: {top_tables}")
+        logger.info(f"Selected tables: {top_tables}")
 
         # 4. Return combined schema string
         return "\n\n".join([self._table_schemas[name] for name in top_tables])

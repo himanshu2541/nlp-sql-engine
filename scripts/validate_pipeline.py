@@ -1,23 +1,27 @@
 import sys
 import os
 
+from nlp_sql_engine.core.steps.generation import SQLGenerationStep
+from nlp_sql_engine.core.steps.planning import PlanningStep
+from nlp_sql_engine.services.gen_pipeline import SQLPipelineService
+
 # Fix import path so we can run this script directly
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from nlp_sql_engine.core.steps.correction import ErrorCorrectionStep
 from nlp_sql_engine.infra.database.sqlite_adapter import SQLiteAdapter
 from nlp_sql_engine.infra.llm.mock_adapter import MockLLMAdapter as ScriptedLLMAdapter
 from nlp_sql_engine.config.settings import settings
 
 # For real LLM testing, uncomment below
 # from nlp_sql_engine.infra.llm.openai_adapter import OpenAIAdapter
-from nlp_sql_engine.services.sql_generator import SQLGenerationService
 from nlp_sql_engine.services.schema_router import SchemaRouter
 from nlp_sql_engine.use_cases.ask_question import AskQuestionUseCase
 from nlp_sql_engine.core.domain.models import NLQuery
 from tests.mocks import MockEmbeddingAdapter  # Reuse mock embedder
 
 # ==========================================
-# 1. DEFINE YOUR CUSTOM DATA HERE
+# 1. DEFINE CUSTOM DATA HERE
 # ==========================================
 SAMPLE_DATA_SQL = """
     -- Clean up
@@ -81,7 +85,11 @@ def run_validation():
 
     # 3. Setup Components
     # NOTE: Switch to OpenAIAdapter(Settings()) here to test REAL generation
-    llm = ScriptedLLMAdapter(settings)
+    llm = ScriptedLLMAdapter(
+        model_name="scripted-model",
+        api_key="dummy-key",
+        temperature=0.0,
+    )
 
     embedder = MockEmbeddingAdapter(settings)
 
@@ -90,8 +98,13 @@ def run_validation():
     router.index_tables()
 
     # 5. Build Pipeline
-    sql_service = SQLGenerationService(llm)
-    app = AskQuestionUseCase(db, sql_service, router)
+    steps = [
+        PlanningStep(llm=llm, role_name="Planner"),
+        SQLGenerationStep(llm=llm, role_name="SQL Generator"),
+        ErrorCorrectionStep(llm=llm, role_name="Debugger"),
+    ]
+    pipeline_service = SQLPipelineService(steps=steps)
+    app = AskQuestionUseCase(db, pipeline_service, router)
 
     # 6. Run Scenarios
     print("\n>>> 🏃 Running Scenarios...")

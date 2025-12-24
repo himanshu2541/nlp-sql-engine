@@ -12,10 +12,12 @@ logger = logging.getLogger(__name__)
 
 @ProviderRegistry.register_llm("openai")
 class OpenAIAdapter(ILLMProvider):
-    def __init__(self, settings: Settings):
-        self.api_key = getattr(settings, "API_KEY", None)
-        self.model = getattr(settings, "LLM_MODEL_NAME", "gpt-4")
-        self.temperature = getattr(settings, "LLM_TEMPERATURE", 0.8)
+    def __init__(
+        self, api_key: str, model_name: str, temperature: float, **kwargs: Any
+    ):
+        self.api_key = api_key
+        self.model = model_name
+        self.temperature = temperature
 
         if not self.api_key:
             logger.error("API_KEY IS NOT SET.")
@@ -23,7 +25,7 @@ class OpenAIAdapter(ILLMProvider):
 
         # intialize the client
         self.client = ChatOpenAI(
-            api_key=self.api_key, model=self.model, temperature=self.temperature
+            api_key=lambda: self.api_key, model=self.model, temperature=self.temperature
         )
 
     def invoke(self, messages: List[Tuple[str, str]]) -> str:

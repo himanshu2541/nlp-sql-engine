@@ -11,12 +11,30 @@ class Settings(BaseSettings):
     DEBUG: bool = ENVIRONMENT == "development"
     LOG_LEVEL: str = "DEBUG" if DEBUG else "INFO"
 
-    # LLM Settings
-    LLM_PROVIDER: str = "local"  # Options: openai, local, mock
-    LLM_MODEL_NAME: str = "phi-3-mini-4k-instruct"  # e.g., gpt-3.5-turbo, phi3-mini
+    # Api keys
+    OPENAI_API_KEY: str = "type-your-openai-api-key-here"
     LLM_BASE_URL: Optional[str] = "http://localhost:1234/v1"  # Base URL for self-hosted LLMs
-    LLM_TEMPERATURE: float = 0.0 # SQL should be deterministic 
-    LLM_API_KEY: str = "type-anything-here"  # For providers that need API keys
+    
+    # Planner LLM Settings
+    PLANNER_LLM_PROVIDER: str = "local"  # Options: openai, local, mock
+    PLANNER_LLM_MODEL_NAME: str = "phi-3-mini-4k-instruct"
+    PLANNER_LLM_BASE_URL: Optional[str] = LLM_BASE_URL  # Base URL for self-hosted LLMs
+    PLANNER_LLM_TEMPERATURE: float = 0.2  
+    PLANNER_LLM_API_KEY: str = OPENAI_API_KEY  # For providers that need API keys
+
+    # Smart LLM Settings
+    GENERATION_LLM_PROVIDER: str = "local"  # Options: openai, local, mock
+    GENERATION_LLM_MODEL_NAME: str = "phi-3-mini-4k-instruct"
+    GENERATION_LLM_BASE_URL: Optional[str] = LLM_BASE_URL  # Base URL for self-hosted LLMs
+    GENERATION_LLM_TEMPERATURE: float = 0.0 
+    GENERATION_LLM_API_KEY: str = OPENAI_API_KEY  # For providers that need API keys
+    
+    # Error Correction LLM Settings
+    DEBUG_LLM_PROVIDER: str = "local"  # Options: openai, local, mock
+    DEBUG_LLM_MODEL_NAME: str = "phi-3-mini-4k-instruct"
+    DEBUG_LLM_BASE_URL: Optional[str] = LLM_BASE_URL  # Base URL for self-hosted LLMs
+    DEBUG_LLM_TEMPERATURE: float = 0.0
+    DEBUG_LLM_API_KEY: str = OPENAI_API_KEY  # For providers that need API keys
     
     # Embedding Settings
     EMBEDDING_PROVIDER: str = "local"  # Options: openai, huggingface, local, mock

@@ -13,12 +13,11 @@ logger = logging.getLogger(__name__)
 
 @ProviderRegistry.register_llm("local")
 class LocalLLMAdapter(ILLMProvider):
-    def __init__(self, settings: Settings):
-        self.api_key = getattr(settings, "API_KEY", "type-your-api-key-here")
-        self.model_name = getattr(settings, "LLM_MODEL_NAME", "phi-3-mini-4k-instruct")
-        self.base_url = getattr(settings, "LLM_BASE_URL", "http://localhost:1234/v1")
-        self.temperature = getattr(settings, "LLM_TEMPERATURE", 0.8)
-
+    def __init__(self, api_key: str, model_name: str, temperature: float, **kwargs: Any):
+        self.api_key = api_key
+        self.model_name = model_name
+        self.base_url = kwargs.get("base_url", "http://localhost:1234/v1")
+        self.temperature = temperature
         self.client = self._create_llm()
 
     def _create_llm(self) -> BaseChatModel:

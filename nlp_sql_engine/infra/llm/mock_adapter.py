@@ -6,7 +6,7 @@ from nlp_sql_engine.app.registry import ProviderRegistry
 
 @ProviderRegistry.register_llm("mock")
 class MockLLMAdapter(ILLMProvider):
-    def __init__(self, settings: Settings):
+    def __init__(self, api_key: str, model_name: str, temperature: float, **kwargs: Any):
         """
         A Test Adapter that maps specific questions to specific SQL queries.
         Useful for validating: 'If the LLM generates X, does the DB return Y?'
