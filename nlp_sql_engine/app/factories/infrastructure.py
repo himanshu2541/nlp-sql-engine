@@ -33,7 +33,7 @@ class InfrastructureFactory:
 
     @staticmethod
     def create_embedding(settings: Settings) -> IEmbeddingProvider:
-        provider_name = getattr(settings, "EMBEDDING_PROVIDER", "openai").lower()
+        provider_name = getattr(settings, "EMBEDDING_PROVIDER", "local").lower()
         embed_class = ProviderRegistry.get_embedding_class(provider_name)
         
         return embed_class(settings)

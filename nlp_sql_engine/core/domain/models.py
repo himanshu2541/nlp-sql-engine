@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Any, Iterator, Optional
 
 
@@ -8,8 +8,7 @@ class SQLQuery(BaseModel):
 
 
 class QueryResult(BaseModel):
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     columns: List[str] = Field(default_factory=list)
     rows: Optional[Iterator[List[Any]]] = None
 
@@ -22,5 +21,5 @@ class NLQuery(BaseModel):
 class PipelineResult(BaseModel):
     sql_query: Optional[SQLQuery] = None
     result: Optional[QueryResult] = None
-    
+
     error: Optional[str] = None

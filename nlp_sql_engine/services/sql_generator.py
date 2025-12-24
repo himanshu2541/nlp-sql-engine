@@ -5,7 +5,7 @@ class SQLGenerationService:
     def __init__(self, llm: ILLMProvider):
         self.llm = llm
 
-    def generate_sql(self, schema_text: str, user_question: str) -> SQLQuery:
+    def generate(self, schema_text: str, user_question: str) -> SQLQuery:
         system_prompt = (
             "You are a SQL Expert. Convert the question to SQL.\n"
             f"Schema:\n{schema_text}"

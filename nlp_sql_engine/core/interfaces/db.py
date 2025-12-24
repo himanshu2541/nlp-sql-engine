@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Generator, Any
+from typing import Generator, Any, List
 
 class IDatabaseConnector(ABC):
     """
@@ -26,4 +26,12 @@ class IDatabaseConnector(ABC):
     @abstractmethod
     def execute_ddl(self, query: str) -> None:
         """Executes DDL statements like CREATE, INSERT, etc."""
+        pass
+
+    @abstractmethod
+    def get_all_table_names(self) -> List[str]:
+        pass
+
+    @abstractmethod
+    def get_table_schema(self, table_name: str) -> str:
         pass
