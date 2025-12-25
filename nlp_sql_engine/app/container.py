@@ -48,7 +48,7 @@ class AppContainer:
         )
 
         embedder = InfrastructureFactory.create_embedding(settings)
-        db = InfrastructureFactory.create_db(settings)
+        db_manager = InfrastructureFactory.create_db_manager(settings)
 
         # Build Steps for Generation Pipeline
         steps = [
@@ -58,11 +58,11 @@ class AppContainer:
         ]
 
         # Build Service Layer
-        schema_router = SchemaRouter(db, embedder)
+        schema_router = SchemaRouter(db_manager, embedder)
         pipeline_service = SQLPipelineService(steps)
 
         # Initialize index (Important)
         schema_router.index_tables()
 
         # Build and Return the Use Case (The Application)
-        return AskQuestionUseCase(db, pipeline_service, schema_router)
+        return AskQuestionUseCase(db_manager, pipeline_service, schema_router)

@@ -2,7 +2,7 @@ from typing import Type, Dict
 from nlp_sql_engine.core.interfaces.llm import ILLMProvider
 from nlp_sql_engine.core.interfaces.embedding import IEmbeddingProvider
 from nlp_sql_engine.core.interfaces.db import IDatabaseConnector
-
+from nlp_sql_engine.core.interfaces.manager import IDatabaseManager
 class ProviderRegistry:
     """
     Central Registry for all infrastructure adapters.
@@ -11,6 +11,7 @@ class ProviderRegistry:
     _LLM_REGISTRY: Dict[str, Type[ILLMProvider]] = {}
     _EMBED_REGISTRY: Dict[str, Type[IEmbeddingProvider]] = {}
     _DB_REGISTRY: Dict[str, Type[IDatabaseConnector]] = {}
+    _DB_MANAGER_REGISTRY: Dict[str, Type[IDatabaseManager]] = {}
 
     # --- LLM Registration ---
     @classmethod
@@ -53,3 +54,17 @@ class ProviderRegistry:
         if name not in cls._DB_REGISTRY:
             raise ValueError(f"Database '{name}' not found. Registered: {list(cls._DB_REGISTRY.keys())}")
         return cls._DB_REGISTRY[name]
+    
+    # --- Database Manager Registration ---
+    @classmethod
+    def register_manager(cls, name: str):
+        def inner_wrapper(wrapped_class: Type[IDatabaseManager]):
+            cls._DB_MANAGER_REGISTRY[name] = wrapped_class
+            return wrapped_class
+        return inner_wrapper
+
+    @classmethod
+    def get_manager_class(cls, name: str) -> Type[IDatabaseManager]:
+        if name not in cls._DB_MANAGER_REGISTRY:
+            raise ValueError(f"Manager '{name}' not found. Registered: {list(cls._DB_MANAGER_REGISTRY.keys())}")
+        return cls._DB_MANAGER_REGISTRY[name]

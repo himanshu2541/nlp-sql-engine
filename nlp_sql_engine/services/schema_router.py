@@ -1,80 +1,100 @@
 import numpy as np
-from typing import List, Dict, Any
-from ..core.interfaces.db import IDatabaseConnector
+from typing import List, Dict, Any, Tuple
+from ..core.interfaces.manager import IDatabaseManager
 from ..core.interfaces.embedding import IEmbeddingProvider
 
 import logging
+
 logger = logging.getLogger(__name__)
+
+
 class SchemaRouter:
     """
     Responsibility: Select only the relevant tables for a given user query.
     Mechanism: Semantic Search (RAG) using Embeddings.
     """
-    def __init__(self, db: IDatabaseConnector, embedder: IEmbeddingProvider):
-        self.db = db
+
+    def __init__(self, db_manager: IDatabaseManager, embedder: IEmbeddingProvider):
+        self.db_manager = db_manager
         self.embedder = embedder
-        
-        # In-Memory Vector Store for Phase 2
-        # Structure: { "table_name": [0.1, 0.5, ...vector...] }
+
+        # Index: { "db_name.table_name": vector }
         self._index: Dict[str, List[float]] = {}
+
+        # Schemas: { "db_name.table_name": "Table schema string..." }
         self._table_schemas: Dict[str, str] = {}
+
+        # Mapping: "db_name.table_name" -> "db_name"
+        self._table_to_db: Dict[str, str] = {}
 
     def index_tables(self):
         """
         Loads all tables from DB, creates descriptions, and embeds them.
         Call this on application startup.
         """
-        print("Indexing database schema...")
-        
-        # 1. Get raw table name
-        # For now, let's assume get_schema returns a Dict or we parse the full schema string.
-        
-        # Simulating fetching individual table schemas
-        # In a real DB adapter, you'd query information_schema
-        tables = self.db.get_all_table_names() 
-        
+        print("Indexing schemas from ALL databases...")
+
         descriptions = []
-        self.table_names = []
+        keys = []
 
-        for table in tables:
-            # We embed "Table: users, Columns: id, name, age..."
-            # This semantic string helps the model match "users" with "people" or "employees"
-            schema_str = self.db.get_table_schema(table) 
-            self._table_schemas[table] = schema_str
-            descriptions.append(schema_str)
-            self.table_names.append(table)
+        # Iterate over all registered databases
+        for db_name, adapter in self.db_manager.get_all_adapters().items():
+            tables = adapter.get_all_table_names()
 
-        # 2. Batch Embed (Efficient!)
+            for table in tables:
+                schema_str = adapter.get_table_schema(table)
+
+                # Create a unique key for the index
+                key = f"{db_name}.{table}"
+
+                # Store Metadata
+                self._table_schemas[key] = schema_str
+                self._table_to_db[key] = db_name
+
+                # Prepare for embedding
+                # We prepend db_name to help context (e.g., "Database: sales. Table: orders")
+                desc_for_embed = f"Database: {db_name}\n{schema_str}"
+                descriptions.append(desc_for_embed)
+                keys.append(key)
+
+        # Batch Embed
         if descriptions:
             vectors = self.embedder.embed_documents(descriptions)
-            
-            for name, vector in zip(self.table_names, vectors):
-                self._index[name] = vector
-        
-        print(f"Indexed {len(self._index)} tables.")
+            for key, vector in zip(keys, vectors):
+                self._index[key] = vector
 
-    def get_relevant_schemas(self, question: str, top_k: int = 3) -> str:
+        print(
+            f"Indexed {len(self._index)} tables across {len(self.db_manager.get_all_adapters())} databases."
+        )
+
+    def route(self, question: str, top_k: int = 3) -> Tuple[str, str]:
         """
-        Returns the combined schema string for the Top-K relevant tables.
+        Returns (Relevant Schema String, Target Database Name) for the Top-K relevant tables.
         """
         if not self._index:
             self.index_tables()
 
-        # 1. Embed User Question
         q_vector = self.embedder.embed_query(question)
 
-        # 2. Calculate Cosine Similarity
+        # Calculate Cosine Similarity
         # (Dot product of normalized vectors)
         scores = []
-        for name, t_vector in self._index.items():
-            score = np.dot(q_vector, t_vector) 
-            scores.append((score, name))
+        for key, t_vector in self._index.items():
+            score = np.dot(q_vector, t_vector)
+            scores.append((score, key))
 
-        # 3. Sort & Pick Top K
+        # Sort & Pick Top K
         scores.sort(key=lambda x: x[0], reverse=True)
-        top_tables = [name for _, name in scores[:top_k]]
-        
-        logger.info(f"Selected tables: {top_tables}")
+        top_keys = [key for _, key in scores[:top_k]]
 
-        # 4. Return combined schema string
-        return "\n\n".join([self._table_schemas[name] for name in top_tables])
+        best_match_key = top_keys[0]
+        target_db = self._table_to_db[best_match_key]
+
+        print(
+            f"[Router] Query mapped to Database: '{target_db}' (Top match: {best_match_key})"
+        )
+
+        # Combine schemas
+        combined_schema = "\n\n".join([self._table_schemas[k] for k in top_keys])
+
+        return combined_schema, target_db

@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import Optional
+from typing import Optional, Dict
 
 
 class Settings(BaseSettings):
@@ -45,5 +45,10 @@ class Settings(BaseSettings):
     # Database Settings
     DB_TYPE: str = "sqlite"  # Options: sqlite, postgresql, mysql, etc.
     DB_CONNECTION_STRING: str = "commerce.db"  # e.g., sqlite:///./test.db or postgresql://user:pass@localhost/dbname
+    
+    DATABASES: Dict[str, str] = {
+        "commerce": "commerce.db",
+        "sales": "sales.db",
+    }
     
 settings = Settings()
