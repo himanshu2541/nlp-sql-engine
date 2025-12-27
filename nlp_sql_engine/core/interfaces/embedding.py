@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List
-from nlp_sql_engine.config.settings import Settings
+from typing import List, Any
 
 class IEmbeddingProvider(ABC):
     """
@@ -9,7 +8,7 @@ class IEmbeddingProvider(ABC):
     """
 
     @abstractmethod
-    def __init__(self, settings: Settings):
+    def __init__(self, model_name: str, api_key: str, **kwargs: Any):
         pass
 
     @abstractmethod

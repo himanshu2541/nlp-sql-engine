@@ -1,7 +1,8 @@
 import numpy as np
 from typing import List, Dict, Any, Tuple
 from ..core.interfaces.manager import IDatabaseManager
-from ..core.interfaces.embedding import IEmbeddingProvider
+from ..core.interfaces.vector_store import IVectorStore
+from nlp_sql_engine.config.settings import Settings
 
 import logging
 
@@ -14,87 +15,51 @@ class SchemaRouter:
     Mechanism: Semantic Search (RAG) using Embeddings.
     """
 
-    def __init__(self, db_manager: IDatabaseManager, embedder: IEmbeddingProvider):
+    def __init__(self, db_manager: IDatabaseManager, vector_store: IVectorStore, settings: Settings):
         self.db_manager = db_manager
-        self.embedder = embedder
-
-        # Index: { "db_name.table_name": vector }
-        self._index: Dict[str, List[float]] = {}
-
-        # Schemas: { "db_name.table_name": "Table schema string..." }
-        self._table_schemas: Dict[str, str] = {}
-
-        # Mapping: "db_name.table_name" -> "db_name"
-        self._table_to_db: Dict[str, str] = {}
+        self.vector_store = vector_store
+        self._is_indexed = False
+        self.settings = settings
 
     def index_tables(self):
         """
         Loads all tables from DB, creates descriptions, and embeds them.
         Call this on application startup.
         """
+
+        if self._is_indexed:
+            return
         print("Indexing schemas from ALL databases...")
 
-        descriptions = []
-        keys = []
+        texts, metadatas = [], []
 
-        # Iterate over all registered databases
         for db_name, adapter in self.db_manager.get_all_adapters().items():
-            tables = adapter.get_all_table_names()
+            for table in adapter.get_all_table_names():
+                schema = adapter.get_table_schema(table)
 
-            for table in tables:
-                schema_str = adapter.get_table_schema(table)
+                # We embed: "Database: sales \n Table: orders \n ...columns..."
+                texts.append(f"Database: {db_name}\n{schema}")
+                metadatas.append({"db_name": db_name, "raw_schema": schema})
 
-                # Create a unique key for the index
-                key = f"{db_name}.{table}"
+        if texts:
+            self.vector_store.add_documents(texts, metadatas)
 
-                # Store Metadata
-                self._table_schemas[key] = schema_str
-                self._table_to_db[key] = db_name
-
-                # Prepare for embedding
-                # We prepend db_name to help context (e.g., "Database: sales. Table: orders")
-                desc_for_embed = f"Database: {db_name}\n{schema_str}"
-                descriptions.append(desc_for_embed)
-                keys.append(key)
-
-        # Batch Embed
-        if descriptions:
-            vectors = self.embedder.embed_documents(descriptions)
-            for key, vector in zip(keys, vectors):
-                self._index[key] = vector
-
-        print(
-            f"Indexed {len(self._index)} tables across {len(self.db_manager.get_all_adapters())} databases."
-        )
+        self._is_indexed = True
 
     def route(self, question: str, top_k: int = 3) -> Tuple[str, str]:
         """
         Returns (Relevant Schema String, Target Database Name) for the Top-K relevant tables.
         """
-        if not self._index:
-            self.index_tables()
+        results = self.vector_store.search(question, k=top_k)
 
-        q_vector = self.embedder.embed_query(question)
+        if not results:
+            return "", self.settings.DB_MANAGER_ADAPTER  # Default DB
 
-        # Calculate Cosine Similarity
-        # (Dot product of normalized vectors)
-        scores = []
-        for key, t_vector in self._index.items():
-            score = np.dot(q_vector, t_vector)
-            scores.append((score, key))
+        # Heuristic: The database of the #1 match is the target DB
+        best_match_meta = results[0][2]
+        target_db = best_match_meta["db_name"]
 
-        # Sort & Pick Top K
-        scores.sort(key=lambda x: x[0], reverse=True)
-        top_keys = [key for _, key in scores[:top_k]]
-
-        best_match_key = top_keys[0]
-        target_db = self._table_to_db[best_match_key]
-
-        print(
-            f"[Router] Query mapped to Database: '{target_db}' (Top match: {best_match_key})"
-        )
-
-        # Combine schemas
-        combined_schema = "\n\n".join([self._table_schemas[k] for k in top_keys])
+        # Return combined schemas of top hits (RAG context)
+        combined_schema = "\n\n".join([r[2]["raw_schema"] for r in results])
 
         return combined_schema, target_db

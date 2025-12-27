@@ -1,11 +1,16 @@
 import json
-from typing import Any
+from typing import Any, cast
 from nlp_sql_engine.config.settings import Settings
 from nlp_sql_engine.app.registry import ProviderRegistry
 from nlp_sql_engine.core.interfaces.llm import ILLMProvider
-from nlp_sql_engine.core.interfaces.db import IDatabaseConnector
 from nlp_sql_engine.core.interfaces.embedding import IEmbeddingProvider
 from nlp_sql_engine.core.interfaces.manager import IDatabaseManager
+from nlp_sql_engine.core.interfaces.vector_store import IVectorStore
+
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class InfrastructureFactory:
@@ -15,13 +20,13 @@ class InfrastructureFactory:
 
     @staticmethod
     def create_llm(
-        provider_name: str,
+        provider: str,
         model_name: str,
         api_key: str,
         temperature: float,
         **kwargs: Any,
     ) -> ILLMProvider:
-        llm_class = ProviderRegistry.get_llm_class(provider_name)
+        llm_class = ProviderRegistry.get_llm_class(provider)
         return llm_class(
             model_name=model_name,
             api_key=api_key,
@@ -30,48 +35,49 @@ class InfrastructureFactory:
         )
 
     @staticmethod
-    def create_db(settings: Settings) -> IDatabaseConnector:
-        # Example: DB_TYPE="sqlite", DB_CONNECTION_STRING="file.db"
-        db_type = getattr(settings, "DB_TYPE", "sqlite").lower()
-        conn_string = getattr(settings, "DB_CONNECTION_STRING", ":memory:")
-
-        db_class = ProviderRegistry.get_db_class(db_type)
-
-        # Depending on IDatabaseConnector __init__, pass the string
-        return db_class(conn_string)
+    def create_embedding(
+        provider: str, model_name: str, api_key: str, **kwargs: Any
+    ) -> IEmbeddingProvider:
+        embed_class = ProviderRegistry.get_embedding_class(provider)
+        return embed_class(model_name=model_name, api_key=api_key, **kwargs)
 
     @staticmethod
-    def create_embedding(settings: Settings) -> IEmbeddingProvider:
-        provider_name = getattr(settings, "EMBEDDING_PROVIDER", "local").lower()
-        embed_class = ProviderRegistry.get_embedding_class(provider_name)
-
-        return embed_class(settings)
+    def create_vector_store(
+        provider: str, embedder: IEmbeddingProvider, **kwargs
+    ) -> IVectorStore:
+        store_cls = ProviderRegistry.get_vector_store_class(provider)
+        return store_cls(embedder=embedder)
 
     @staticmethod
-    def create_db_manager(settings: Settings) -> IDatabaseManager:
-        manager_type = getattr(settings, "DB_MANAGER_TYPE", "default").lower()
-        manager_class = ProviderRegistry.get_manager_class(manager_type)
-
-        # Instantiation
+    def create_db_manager(
+        db_manager: str, db_type: str, settings: Settings, **kwargs
+    ) -> IDatabaseManager:
+        manager_class = ProviderRegistry.get_manager_class(db_manager)
         manager = manager_class()
 
-        databases = {}
+        adapter_class = ProviderRegistry.get_db_class(db_type)
 
-        if hasattr(settings, "DATABASES") and settings.DATABASES:
-            if isinstance(settings.DATABASES, str):
-                databases = json.loads(settings.DATABASES)
-            else:
-                databases = settings.DATABASES
+        if hasattr(adapter_class, "create"):
+            adapter = cast(Any, adapter_class).create(settings)
+            manager.register_adapter(settings.DB_MANAGER_ADAPTER, adapter)
+
         else:
-            default_conn = getattr(settings, "DB_CONNECTION_STRING", ":memory:")
-            databases = {"default": default_conn}
+            print(
+                f"Adapter '{db_type}' does not support auto-configuration. Using legacy loader."
+            )
 
-        db_type = getattr(settings, "DB_TYPE", "sqlite").lower()
-        db_class = ProviderRegistry.get_db_class(db_type)
+            databases = {}
+            if hasattr(settings, "DATABASES") and settings.DATABASES:
+                if isinstance(settings.DATABASES, str):
+                    databases = json.loads(settings.DATABASES)
+                else:
+                    databases = settings.DATABASES
+            else:
+                default_conn = getattr(settings, "DB_CONNECTION_STRING", ":memory:")
+                databases = {"default": default_conn}
 
-        if hasattr(manager, "register_adapter"):
             for name, conn_str in databases.items():
-                adapter = db_class(conn_str)
+                adapter = adapter_class(conn_str)
                 manager.register_adapter(name, adapter)
 
         return manager

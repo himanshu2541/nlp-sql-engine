@@ -25,14 +25,14 @@ class AppContainer:
 
         # Build Infrastructure (via Factory)
         llm_plan = InfrastructureFactory.create_llm(
-            provider_name=settings.PLANNER_LLM_PROVIDER,
+            provider=settings.PLANNER_LLM_PROVIDER,
             model_name=settings.PLANNER_LLM_MODEL_NAME,
             api_key=settings.PLANNER_LLM_API_KEY,
             temperature=settings.PLANNER_LLM_TEMPERATURE,
             base_url=settings.PLANNER_LLM_BASE_URL,
         )
         llm_generation = InfrastructureFactory.create_llm(
-            provider_name=settings.GENERATION_LLM_PROVIDER,
+            provider=settings.GENERATION_LLM_PROVIDER,
             model_name=settings.GENERATION_LLM_MODEL_NAME,
             api_key=settings.GENERATION_LLM_API_KEY,
             temperature=settings.GENERATION_LLM_TEMPERATURE,
@@ -40,15 +40,28 @@ class AppContainer:
         )
 
         llm_debug = InfrastructureFactory.create_llm(
-            provider_name=settings.DEBUG_LLM_PROVIDER,
+            provider=settings.DEBUG_LLM_PROVIDER,
             model_name=settings.DEBUG_LLM_MODEL_NAME,
             api_key=settings.DEBUG_LLM_API_KEY,
             temperature=settings.DEBUG_LLM_TEMPERATURE,
             base_url=settings.DEBUG_LLM_BASE_URL,
         )
 
-        embedder = InfrastructureFactory.create_embedding(settings)
-        db_manager = InfrastructureFactory.create_db_manager(settings)
+        embedder = InfrastructureFactory.create_embedding(
+            provider=settings.EMBEDDING_PROVIDER,
+            model_name=settings.EMBEDDING_MODEL_NAME,
+            api_key=settings.EMBEDDING_API_KEY,
+            base_url=settings.EMBEDDING_BASE_URL,
+        )
+
+        vector_store = InfrastructureFactory.create_vector_store(
+            provider=settings.VECTOR_STORE_PROVIDER, embedder=embedder
+        )
+        db_manager = InfrastructureFactory.create_db_manager(
+            db_manager=settings.DB_MANAGER,
+            db_type=settings.DB_TYPE,
+            settings=settings,
+        )
 
         # Build Steps for Generation Pipeline
         steps = [
@@ -58,7 +71,7 @@ class AppContainer:
         ]
 
         # Build Service Layer
-        schema_router = SchemaRouter(db_manager, embedder)
+        schema_router = SchemaRouter(db_manager, vector_store, settings)
         pipeline_service = SQLPipelineService(steps)
 
         # Initialize index (Important)

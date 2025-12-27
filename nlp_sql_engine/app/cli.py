@@ -31,14 +31,14 @@ def run_cli(app: AskQuestionUseCase):
                 if result.error:
                     logger.error(f"Error: {result.error}")
                 elif result.sql_query:
-                    logger.info(f"Generated SQL: {result.sql_query.query}")
+                    print(f"Generated SQL: {result.sql_query.query}")
                     
                     if result.result and result.result.rows:
-                        logger.info("Results:")
+                        print("Results:")
                         for row in result.result.rows:
-                            logger.info(f"   -> {row}")
+                            print(f"   -> {row}")
                     else:
-                        logger.info("(No rows returned)")
+                        print("(No rows returned)")
                         
         except KeyboardInterrupt:
             logger.info("Exiting CLI.")

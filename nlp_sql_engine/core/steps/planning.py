@@ -10,20 +10,20 @@ logger = logging.getLogger(__name__)
 
 class PlanningStep(BaseLLMStep):
     def execute(self, context: PipelineContext) -> PipelineContext:
-        logger.info(f"   >>> [Step: Planning] using {self.role_name}...")
+        print(f"   >>> [Step: Planning] using {self.role_name}...")
 
         prompt = ChatPromptTemplate.from_messages(
             [
                 (
                     "user",
                     "### Role: Data Architect\n"
-                    "Analyze the user's request and the database schema to create a logical execution plan.\n"
+                    "Analyze the user's request and the virtual database schema to create a logical execution plan.\n"
                     "Rules:\n"
-                    "1. **Column Mapping:** explicitely identify which column holds the search term. (e.g. 'Laptop' -> `product_name`, 'Electronics' -> `category.name`).\n"
-                    "2. **Table Selection:** Only include tables needed for the data or the filter.\n"
-                    "3. **Join Strategy:** If data spans multiple tables, explicitly list the Foreign Key connections needed.\n"
+                    "1. **Column Mapping:** Explicitly map user terms to specific columns (e.g. 'Laptop' -> `products.product_name`).\n"
+                    "2. **Table Selection:** Select the correct virtual tables from the list.\n"
+                    "3. **Join Strategy:** Explicitly list the Foreign Key connections needed (e.g. `orders.customer_id` = `customers.id`).\n"
                     "\n"
-                    "### Schema:\n{schema}\n\n"
+                    "### Virtual Schema:\n{schema}\n\n"
                     "### Request:\n{question}\n\n"
                     "### Output:\nPlan:",
                 )

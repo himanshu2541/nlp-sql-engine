@@ -3,6 +3,7 @@ from nlp_sql_engine.core.interfaces.llm import ILLMProvider
 from nlp_sql_engine.core.interfaces.embedding import IEmbeddingProvider
 from nlp_sql_engine.core.interfaces.db import IDatabaseConnector
 from nlp_sql_engine.core.interfaces.manager import IDatabaseManager
+from nlp_sql_engine.core.interfaces.vector_store import IVectorStore
 class ProviderRegistry:
     """
     Central Registry for all infrastructure adapters.
@@ -12,6 +13,7 @@ class ProviderRegistry:
     _EMBED_REGISTRY: Dict[str, Type[IEmbeddingProvider]] = {}
     _DB_REGISTRY: Dict[str, Type[IDatabaseConnector]] = {}
     _DB_MANAGER_REGISTRY: Dict[str, Type[IDatabaseManager]] = {}
+    _VECTOR_STORE_REGISTRY: Dict[str, Type[IVectorStore]] = {}
 
     # --- LLM Registration ---
     @classmethod
@@ -68,3 +70,15 @@ class ProviderRegistry:
         if name not in cls._DB_MANAGER_REGISTRY:
             raise ValueError(f"Manager '{name}' not found. Registered: {list(cls._DB_MANAGER_REGISTRY.keys())}")
         return cls._DB_MANAGER_REGISTRY[name]
+    
+    # --- Vector Store Registration ---
+    @classmethod
+    def register_vector_store(cls, name: str):
+        def inner(wrapped):
+            cls._VECTOR_STORE_REGISTRY[name] = wrapped
+            return wrapped
+        return inner
+
+    @classmethod
+    def get_vector_store_class(cls, name: str) -> Type[IVectorStore]:
+        return cls._VECTOR_STORE_REGISTRY[name]

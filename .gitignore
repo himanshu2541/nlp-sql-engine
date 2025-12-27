@@ -17,3 +17,6 @@ wheels/
 # IDE settings
 .idea/
 .vscode/
+
+# Test Database directory
+test_database

@@ -10,15 +10,15 @@ logger = logging.getLogger(__name__)
 
 @ProviderRegistry.register_embedding("openai")
 class OpenAIEmbeddingAdapter(IEmbeddingProvider):
-    def __init__(self, settings: Settings):
-        self.api_key = getattr(settings, "API_KEY", None)
-        self.model = getattr(settings, "EMBEDDING_MODEL_NAME", "text-embedding-ada-002")
+    def __init__(self, model_name: str, api_key: str):
+        self.api_key = api_key
+        self.model = model_name
 
         if not self.api_key:
             logger.error("API_KEY IS NOT SET.")
             raise ValueError("API KEY is not set.")
 
-        self.client = OpenAIEmbeddings(api_key=self.api_key, model=self.model)
+        self.client = OpenAIEmbeddings(api_key=lambda: self.api_key, model=self.model)
 
     def embed_query(self, text: str) -> List[float]:
         return self.client.embed_query(text)
