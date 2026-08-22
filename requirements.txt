@@ -9,6 +9,6 @@ pandas>=2.2.0
 fastapi>=0.110.0
 uvicorn>=0.28.0
 openai>=1.30.0
-gradio
+
 
 
