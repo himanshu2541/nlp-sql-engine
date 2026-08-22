@@ -43,6 +43,23 @@ class Settings(BaseSettings):
         default_key = self.OPENAI_API_KEY or ""
         default_url = self.LLM_BASE_URL or "http://localhost:1234/v1"
 
+        # Auto-detect OpenRouter
+        is_openrouter = "openrouter.ai" in (self.LLM_BASE_URL or "") or default_key.startswith("sk-or-")
+        if is_openrouter:
+            if self.PLANNER_LLM_PROVIDER == "local":
+                self.PLANNER_LLM_PROVIDER = "openrouter"
+            if self.GENERATION_LLM_PROVIDER == "local":
+                self.GENERATION_LLM_PROVIDER = "openrouter"
+            if self.DEBUG_LLM_PROVIDER == "local":
+                self.DEBUG_LLM_PROVIDER = "openrouter"
+
+            if self.PLANNER_LLM_MODEL_NAME == "phi-3-mini-4k-instruct":
+                self.PLANNER_LLM_MODEL_NAME = "stealth/ox-alpha"
+            if self.GENERATION_LLM_MODEL_NAME == "phi-3-mini-4k-instruct":
+                self.GENERATION_LLM_MODEL_NAME = "stealth/ox-alpha"
+            if self.DEBUG_LLM_MODEL_NAME == "phi-3-mini-4k-instruct":
+                self.DEBUG_LLM_MODEL_NAME = "stealth/ox-alpha"
+
         if not self.PLANNER_LLM_API_KEY:
             self.PLANNER_LLM_API_KEY = default_key
         if not self.PLANNER_LLM_BASE_URL:
@@ -59,6 +76,7 @@ class Settings(BaseSettings):
             self.DEBUG_LLM_BASE_URL = default_url
 
         return self
+
 
     # Embedding Settings
     EMBEDDING_PROVIDER: str = "gemini"  # Options: gemini, openai, huggingface, local, mock
