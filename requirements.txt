@@ -66,7 +66,7 @@ langchain-protocol==0.0.18
     # via langchain-core
 langsmith==0.11.1
     # via langchain-core
-numpy==2.5.2
+numpy==2.2.6
     # via
     #   nlp-sql-engine (pyproject.toml)
     #   pandas
