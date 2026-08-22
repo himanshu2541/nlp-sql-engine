@@ -24,9 +24,7 @@ certifi==2026.7.22
 charset-normalizer==3.5.1
     # via requests
 click==8.4.2
-    # via
-    #   huggingface-hub
-    #   uvicorn
+    # via uvicorn
 colorama==0.4.6
     # via
     #   click
@@ -61,8 +59,6 @@ h11==0.16.0
     #   httpcore
     #   httpcore2
     #   uvicorn
-hf-xet==1.6.0
-    # via huggingface-hub
 httpcore==1.0.9
     # via httpx
 httpcore2==2.12.0
@@ -71,13 +67,13 @@ httpx==0.28.1
     # via
     #   gradio
     #   gradio-client
-    #   huggingface-hub
     #   langchain-core
     #   langsmith
 httpx2==2.12.0
     # via openai
-huggingface-hub==1.28.0
+huggingface-hub==0.23.5
     # via
+    #   nlp-sql-engine (pyproject.toml)
     #   gradio
     #   gradio-client
 idna==3.19
@@ -187,6 +183,7 @@ regex==2026.7.19
     # via tiktoken
 requests==2.34.2
     # via
+    #   huggingface-hub
     #   langsmith
     #   requests-toolbelt
     #   tiktoken
