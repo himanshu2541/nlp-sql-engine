@@ -22,19 +22,11 @@ from nlp_sql_engine.core.domain.models import NLQuery
 
 app_engine = AppContainer.build()
 
-# ZeroGPU Compatibility decorator
-try:
-    import spaces
-    gpu_decorator = spaces.GPU
-except Exception:
-    def gpu_decorator(func):
-        return func
 
-
-@gpu_decorator
 def run_query(user_question: str):
     if not user_question.strip():
         return "-- Please enter a question", pd.DataFrame(), "⚠️ Question cannot be empty."
+
 
 
     start_time = time.perf_counter()
