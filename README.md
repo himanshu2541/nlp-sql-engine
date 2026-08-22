@@ -1,4 +1,17 @@
+---
+title: NLP SQL Federated Engine
+emoji: ⚡
+colorFrom: indigo
+colorTo: purple
+sdk: gradio
+sdk_version: 6.25.0
+app_file: app.py
+pinned: false
+license: mit
+---
+
 # ⚡ NLP-SQL Federated Engine
+
 
 [![Python 3.12](https://img.shields.io/badge/Python-3.12%2B-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688.svg)](https://fastapi.tiangolo.com/)
