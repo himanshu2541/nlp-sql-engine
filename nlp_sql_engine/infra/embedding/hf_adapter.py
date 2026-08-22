@@ -1,10 +1,10 @@
 from typing import Any, List
 from nlp_sql_engine.core.interfaces.embedding import IEmbeddingProvider
 from nlp_sql_engine.app.registry import ProviderRegistry
-from langchain_huggingface import HuggingFaceEmbeddings
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 
 @ProviderRegistry.register_embedding("huggingface")
