@@ -1,4 +1,4 @@
-﻿import os
+import os
 import sys
 import time
 import pandas as pd
@@ -87,7 +87,7 @@ sample_examples = [
     ["Hello"],
 ]
 
-with gr.Blocks(theme=gr.themes.Soft(primary_hue="indigo", secondary_hue="slate"), css=custom_css, title="NLP-SQL Engine") as demo:
+with gr.Blocks(title="NLP-SQL Engine") as demo:
     gr.Markdown(
         """
         # ⚡ NLP-SQL Federated Engine
@@ -141,5 +141,6 @@ with gr.Blocks(theme=gr.themes.Soft(primary_hue="indigo", secondary_hue="slate")
         outputs=[query_input, sql_output, table_output, status_output],
     )
 
-if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=7860)
+# Launch Gradio interface
+demo.launch(server_name="0.0.0.0", server_port=7860)
+

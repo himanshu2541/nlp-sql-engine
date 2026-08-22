@@ -4,7 +4,8 @@ from nlp_sql_engine.core.interfaces.llm import ILLMProvider
 from nlp_sql_engine.app.registry import ProviderRegistry
 
 from langchain_openai import ChatOpenAI
-from langchain.chat_models import BaseChatModel
+from langchain_core.language_models.chat_models import BaseChatModel
+
 
 import logging
 

@@ -10,8 +10,13 @@ logger = logging.getLogger(__name__)
 @ProviderRegistry.register_embedding("huggingface")
 class HuggingFaceEmbeddingAdapter(IEmbeddingProvider):
     def __init__(self, model_name: str, api_key: str, **kwargs: Any):
-        self.model_name = model_name
-        self.client = HuggingFaceEmbeddings(model_name=self.model_name)
+        try:
+            from langchain_huggingface import HuggingFaceEmbeddings
+            self.model_name = model_name
+            self.client = HuggingFaceEmbeddings(model_name=self.model_name)
+        except Exception as e:
+            raise ImportError(f"HuggingFace embeddings requires 'langchain-huggingface' and 'sentence-transformers': {e}")
+
 
     def embed_query(self, text: str) -> List[float]:
         return self.client.embed_query(text)
