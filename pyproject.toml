@@ -12,20 +12,20 @@ description = "NLP to SQL Engine"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "gradio>=4.44.0,<5.0.0",
+    "gradio>=5.0.0",
     "langchain-core>=0.3.0",
     "langchain-openai>=0.3.0",
     "pydantic>=2.10.0",
     "pydantic-settings>=2.8.0",
-    "numpy>=1.26.0,<2.3.0",
+    "numpy>=1.26.0",
     "sqlalchemy>=2.0.30",
     "sqlglot>=28.5.0",
-    "pandas>=2.2.0,<3.0.0",
+    "pandas>=2.2.0",
     "fastapi>=0.110.0",
     "uvicorn>=0.28.0",
     "openai>=1.30.0",
-    "huggingface-hub==0.23.5",
 ]
+
 
 
 

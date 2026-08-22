@@ -142,5 +142,6 @@ with gr.Blocks(title="NLP-SQL Engine") as demo:
     )
 
 # Launch Gradio interface
-demo.launch(server_name="0.0.0.0", server_port=7860)
+demo.launch()
+
 
