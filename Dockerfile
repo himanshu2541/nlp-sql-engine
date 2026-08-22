@@ -17,7 +17,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project
 
 # 2. Copy source code and install project
-COPY questions.txt app.py ./
+COPY questions.txt ./
 COPY nlp_sql_engine/ ./nlp_sql_engine/
 COPY scripts/ ./scripts/
 RUN --mount=type=cache,target=/root/.cache/uv \
@@ -25,5 +25,6 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 EXPOSE 8000
 
-CMD ["uv", "run", "uvicorn", "nlp_sql_engine.web.app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "uv run uvicorn nlp_sql_engine.web.app:app --host 0.0.0.0 --port ${PORT:-8000}"]
+
 
