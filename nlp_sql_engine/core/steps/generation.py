@@ -21,6 +21,7 @@ class SQLGenerationStep(BaseLLMStep):
                     '4. **No Backticks:** NEVER use backticks (`). Use standard SQL syntax. Identifiers should be unquoted or use double quotes (") only if necessary.\n'
                     "5. **Text Smarts:** NEVER use '=' for strings. ALWAYS use `LIKE '%value%'` for case-insensitive matching.\n"
                     "6. **Dates:** Use SQLite `strftime` for partial dates: `strftime('%Y', order_date) = '2023'`.\n"
+                    "7. **Literal Values:** NEVER use parameter placeholders (e.g., :param, :threshold, ?). ALWAYS insert literal values directly into the query (e.g. `price > 100`).\n"
                     "\n"
                     "### Schema (Reference for Column Names):\n{schema}\n\n"
                     "### Architect's Plan:\n{plan}\n\n"

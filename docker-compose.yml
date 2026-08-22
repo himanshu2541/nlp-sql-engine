@@ -1,0 +1,21 @@
+services:
+  nlp-sql-engine:
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nlp-sql-engine
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      # Mount the databases directory so changes persist across container restarts
+      - ./test_database:/app/test_database
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s

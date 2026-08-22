@@ -1,8 +1,11 @@
+import time
 from typing import Generator, Any
 from nlp_sql_engine.core.interfaces.manager import IDatabaseManager
 from nlp_sql_engine.services.gen_pipeline import SQLPipelineService
 from nlp_sql_engine.services.schema_router import SchemaRouter
-from nlp_sql_engine.core.domain.models import NLQuery, PipelineResult, QueryResult
+from nlp_sql_engine.core.domain.models import NLQuery, PipelineResult, QueryResult, SQLQuery
+from nlp_sql_engine.core.security.guardrail import SQLSecurityGuardrail
+from nlp_sql_engine.core.security.intent_guardrail import IntentGuardrail
 
 import logging
 
@@ -21,14 +24,33 @@ class AskQuestionUseCase:
         self.schema_router = schema_router
 
     def execute(self, query: NLQuery) -> Generator[PipelineResult, None, None]:
-        try:
-            # Get relevant schema using the Schema Router
-            relevant_schema, target_db_name = self.schema_router.route(query.question)
+        # 0. Intent Guardrail Check (Intercept Greetings / Help / Non-Queries)
+        is_non_query, guard_msg = IntentGuardrail.evaluate(query.question)
+        if is_non_query:
+            yield PipelineResult(message=guard_msg)
+            return
 
+        try:
+            # 1. Get relevant schema using the Schema Router
+            relevant_schema, target_db_name = self.schema_router.route(query.question)
             active_adapter = self.db_manager.get_adapter(target_db_name)
 
+            # 2. Run Generation Pipeline
             query_model = self.pipeline_service.run(relevant_schema, query.question)
 
+
+            # 3. Security Guardrail Check
+            is_safe, sanitized_sql, guard_error = SQLSecurityGuardrail.validate_and_sanitize(query_model.query)
+            if not is_safe:
+                yield PipelineResult(
+                    sql_query=query_model,
+                    error=f"Security Guardrail Blocked Query: {guard_error}",
+                )
+                return
+
+            query_model = SQLQuery(query=sanitized_sql)
+
+            # 4. Execution & Self-Correction Feedback Loop
             attempt = 0
             max_retries = 2
 
@@ -53,7 +75,9 @@ class AskQuestionUseCase:
                         )
                     else:
                         yield PipelineResult(
+                            sql_query=query_model,
                             error=f"Failed on DB '{target_db_name}': {str(e)}"
                         )
         except Exception as e:
-            yield PipelineResult(error=f"Schema Routing Error: {str(e)}")
+            yield PipelineResult(error=f"Execution Error: {str(e)}")
+

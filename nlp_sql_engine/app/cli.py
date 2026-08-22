@@ -28,7 +28,9 @@ def run_cli(app: AskQuestionUseCase):
             query_model = NLQuery(question=user_input)
             
             for result in app.execute(query_model):
-                if result.error:
+                if result.message:
+                    print(f"\n{result.message}\n")
+                elif result.error:
                     logger.error(f"Error: {result.error}")
                 elif result.sql_query:
                     print(f"Generated SQL: {result.sql_query.query}")
@@ -39,6 +41,7 @@ def run_cli(app: AskQuestionUseCase):
                             print(f"   -> {row}")
                     else:
                         print("(No rows returned)")
+
                         
         except KeyboardInterrupt:
             logger.info("Exiting CLI.")

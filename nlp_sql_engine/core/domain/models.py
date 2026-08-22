@@ -21,5 +21,6 @@ class NLQuery(BaseModel):
 class PipelineResult(BaseModel):
     sql_query: Optional[SQLQuery] = None
     result: Optional[QueryResult] = None
-
+    message: Optional[str] = None
     error: Optional[str] = None
+

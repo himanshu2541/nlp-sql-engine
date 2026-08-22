@@ -10,6 +10,7 @@ from nlp_sql_engine.app.registry import ProviderRegistry
 import logging
 
 from nlp_sql_engine.infra.database.sqlalchemy_adapter import SQLAlchemyAdapter
+from nlp_sql_engine.services.schema_discovery import AutoSchemaDiscoverer
 
 logger = logging.getLogger(__name__)
 
@@ -24,28 +25,32 @@ class FederatedAdapter(IDatabaseConnector):
     @classmethod
     def create(cls, settings: Settings) -> "FederatedAdapter":
         """
-        Self-configuration logic for Federation.
+        Self-configuration logic for Federation with automatic schema discovery.
         """
         # Parse Physical Attachments
         physicals = {}
-        # Get raw config (dict or json string)
         db_configs = getattr(settings, "FEDERATED_ATTACHMENTS", {})
         if isinstance(db_configs, str):
             db_configs = json.loads(db_configs)
 
-        # Instantiate Child Adapters
-        # NOTE: For now, we assume children are SQLAlchemyAdapters.
-        # If we need mixed types later, you can add a "type" field in the config JSON.
         for alias, uri in db_configs.items():
             physicals[alias] = SQLAlchemyAdapter(uri)
 
-        # Get Virtual Schema & Relationships
-        virtual_map = getattr(settings, "VIRTUAL_SCHEMA", {})
-        rels = getattr(settings, "VIRTUAL_RELATIONSHIPS", [])
+        # Get Virtual Schema & Relationships (Auto-discover if not provided)
+        virtual_map = getattr(settings, "VIRTUAL_SCHEMA", {}) or {}
+        if not virtual_map:
+            logger.info("[Federation] Auto-discovering virtual schema from physical databases...")
+            virtual_map = AutoSchemaDiscoverer.discover_virtual_schema(physicals)
+
+        rels = getattr(settings, "VIRTUAL_RELATIONSHIPS", []) or []
+        if not rels:
+            logger.info("[Federation] Auto-inferring cross-database relationships...")
+            rels = AutoSchemaDiscoverer.infer_relationships(physicals, virtual_map)
 
         return cls(
             adapters=physicals, table_mapping=virtual_map, relationship_graph=rels
         )
+
 
     def __init__(
         self,

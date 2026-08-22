@@ -22,10 +22,14 @@ dependencies = [
     "sqlalchemy>=2.0.45",
     "sqlglot>=28.5.0",
     "pandas>=2.3.3",
+    "fastapi>=0.110.0",
+    "uvicorn>=0.28.0",
 ]
 
 [project.scripts]
 engine = "nlp_sql_engine.app.main:main"
+engine-ui = "nlp_sql_engine.web.app:run"
+
 
 [dependency-groups]
 dev = [

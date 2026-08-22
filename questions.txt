@@ -1,0 +1,29 @@
+List all customers from the USA.
+
+Show the names and emails of customers who signed up in 2023.
+
+What products cost more than $100?
+
+List all orders with status “pending”.
+
+Show all products with stock quantity below 50.
+
+How many customers are from the UK?
+
+What is the average price of all products?
+
+List the latest 5 orders by order date.
+
+List customer names and their order IDs.
+
+Show all orders placed by Alice Smith.
+
+List products that have been ordered at least once.
+
+Show order IDs and total quantity of items in each order.
+
+List customers who have written at least one review.
+
+Show product names and their average rating.
+
+Find customers who placed more than one order.

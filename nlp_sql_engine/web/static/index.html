@@ -1,0 +1,408 @@
+﻿<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NLP-SQL Engine | Production Federated Query Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        pre, code { font-family: 'Fira Code', monospace; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+
+    <!-- Top Navigation Bar -->
+    <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                    <i data-lucide="database-zap" class="w-5 h-5 text-white"></i>
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-300 bg-clip-text text-transparent">NLP-SQL Engine</span>
+                        <span class="px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">v1.0 Live</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Natural Language to Federated Multi-Database SQL</p>
+                </div>
+            </div>
+
+            <!-- Header Actions -->
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700/60 text-xs text-slate-300">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>Federation Engine Active</span>
+                </div>
+                <a href="/docs" target="_blank" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-200 flex items-center space-x-1.5 transition">
+                    <i data-lucide="file-code-2" class="w-3.5 h-3.5"></i>
+                    <span>Swagger API</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Layout -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left Column: Controls & Schema Explorer (4 cols) -->
+        <aside class="lg:col-span-4 space-y-6">
+
+            <!-- Prompt Input Card -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl shadow-black/40">
+                <div class="flex items-center justify-between mb-3">
+                    <label for="queryInput" class="text-sm font-semibold text-slate-200 flex items-center space-x-2">
+                        <i data-lucide="sparkles" class="w-4 h-4 text-indigo-400"></i>
+                        <span>Ask in Natural Language</span>
+                    </label>
+                    <span class="text-[11px] text-slate-400">Ctrl + Enter</span>
+                </div>
+                <div class="relative">
+                    <textarea id="queryInput" rows="3" 
+                        class="w-full bg-slate-950 border border-slate-700/80 rounded-xl p-3.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition resize-none custom-scrollbar"
+                        placeholder="e.g. List customer names and their order IDs..."></textarea>
+                </div>
+                <div class="mt-4 flex items-center justify-between gap-3">
+                    <button id="clearBtn" onclick="clearInput()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-300 font-medium transition flex items-center space-x-1.5">
+                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                        <span>Clear</span>
+                    </button>
+                    <button id="runBtn" onclick="submitQuery()" class="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-semibold shadow-lg shadow-indigo-600/30 transition flex items-center justify-center space-x-2">
+                        <i data-lucide="play" class="w-4 h-4 fill-white"></i>
+                        <span>Execute Query</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sample Queries -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl shadow-black/40">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-semibold text-slate-200 flex items-center space-x-2">
+                        <i data-lucide="lightbulb" class="w-4 h-4 text-amber-400"></i>
+                        <span>Pre-Loaded Sample Queries</span>
+                    </h3>
+                </div>
+                <div id="sampleQueriesList" class="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-1">
+                    <div class="text-xs text-slate-500 animate-pulse">Loading queries...</div>
+                </div>
+            </div>
+
+            <!-- Connected Physical Databases -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl shadow-black/40">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-semibold text-slate-200 flex items-center space-x-2">
+                        <i data-lucide="layers" class="w-4 h-4 text-indigo-400"></i>
+                        <span>Connected Databases</span>
+                    </h3>
+                </div>
+                <div class="space-y-2.5 text-xs">
+                    <div class="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-between">
+                        <div class="flex items-center space-x-2.5">
+                            <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+                            <span class="font-medium text-slate-200">crm.db</span>
+                        </div>
+                        <span class="text-slate-400">customers, reviews</span>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-between">
+                        <div class="flex items-center space-x-2.5">
+                            <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+                            <span class="font-medium text-slate-200">inventory.db</span>
+                        </div>
+                        <span class="text-slate-400">products, categories</span>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-between">
+                        <div class="flex items-center space-x-2.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                            <span class="font-medium text-slate-200">sales.db</span>
+                        </div>
+                        <span class="text-slate-400">orders, order_items, payments</span>
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- Right Column: Results & SQL Inspector (8 cols) -->
+        <section class="lg:col-span-8 space-y-6">
+
+            <!-- Execution Status & Meta Banner -->
+            <div id="statusCard" class="hidden bg-slate-900/80 border border-slate-800 rounded-2xl p-4 shadow-xl flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div id="statusIcon" class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <div id="statusTitle" class="text-sm font-semibold text-slate-200">Query Executed Successfully</div>
+                        <div id="statusSubtitle" class="text-xs text-slate-400">0 rows returned</div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3 text-xs text-slate-400">
+                    <div class="flex items-center space-x-1.5 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">
+                        <i data-lucide="clock" class="w-3.5 h-3.5 text-indigo-400"></i>
+                        <span id="latencyBadge">0 ms</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Banner -->
+            <div id="errorCard" class="hidden bg-rose-950/30 border border-rose-800/50 rounded-2xl p-4 shadow-xl flex items-start space-x-3">
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-rose-400 shrink-0 mt-0.5"></i>
+                <div class="flex-1 text-xs">
+                    <div class="font-semibold text-rose-200 mb-1">Execution Error</div>
+                    <div id="errorMessage" class="text-rose-300 font-mono leading-relaxed break-all"></div>
+                </div>
+            </div>
+
+            <!-- Generated SQL Card -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-xl shadow-black/40">
+                <div class="bg-slate-950/80 px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="code" class="w-4 h-4 text-indigo-400"></i>
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-300">Generated SQL Query</span>
+                    </div>
+                    <button onclick="copySQL()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-300 flex items-center space-x-1 transition">
+                        <i data-lucide="copy" class="w-3 h-3"></i>
+                        <span id="copyBtnText">Copy</span>
+                    </button>
+                </div>
+                <div class="p-4 bg-slate-950 overflow-x-auto custom-scrollbar">
+                    <pre><code id="sqlOutput" class="text-xs text-emerald-400 leading-relaxed font-mono">-- Enter a question and click 'Execute Query' to generate SQL</code></pre>
+                </div>
+            </div>
+
+            <!-- Data Table Card -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-xl shadow-black/40">
+                <div class="bg-slate-950/80 px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="table" class="w-4 h-4 text-purple-400"></i>
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-300">Query Results Data</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="exportCSV()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-300 flex items-center space-x-1 transition">
+                            <i data-lucide="download" class="w-3 h-3"></i>
+                            <span>CSV</span>
+                        </button>
+                        <button onclick="exportJSON()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-300 flex items-center space-x-1 transition">
+                            <i data-lucide="file-json" class="w-3 h-3"></i>
+                            <span>JSON</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Table Container -->
+                <div class="overflow-x-auto max-h-96 custom-scrollbar p-1">
+                    <table id="dataTable" class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr id="tableHeader" class="bg-slate-950 text-slate-400 border-b border-slate-800 sticky top-0">
+                                <th class="p-3 font-medium">#</th>
+                                <th class="p-3 font-medium">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody" class="divide-y divide-slate-800/60 font-mono text-slate-200">
+                            <tr>
+                                <td colspan="2" class="p-8 text-center text-slate-500">No data to display. Run a query to view results.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-900 bg-slate-950 py-4 mt-auto text-center text-xs text-slate-500">
+        NLP-SQL Engine • Modular Federated AI Architecture • Powered by OpenRouter & Gemini
+    </footer>
+
+    <!-- App Script -->
+    <script>
+        let currentResults = [];
+        let currentColumns = [];
+
+        // Load Sample Queries on Startup
+        async function loadSampleQueries() {
+            try {
+                const res = await fetch('/api/sample-questions');
+                const data = await res.json();
+                const container = document.getElementById('sampleQueriesList');
+                container.innerHTML = '';
+
+                data.questions.slice(0, 8).forEach(q => {
+                    const btn = document.createElement('button');
+                    btn.className = 'w-full text-left p-2.5 rounded-xl bg-slate-950/60 hover:bg-indigo-950/30 border border-slate-800/80 hover:border-indigo-500/40 text-xs text-slate-300 transition duration-150 flex items-start space-x-2';
+                    btn.innerHTML = `<i data-lucide="arrow-right" class="w-3.5 h-3.5 text-indigo-400 mt-0.5 shrink-0"></i><span class="line-clamp-2">${q}</span>`;
+                    btn.onclick = () => {
+                        document.getElementById('queryInput').value = q;
+                        submitQuery();
+                    };
+                    container.appendChild(btn);
+                });
+                lucide.createIcons();
+            } catch (err) {
+                console.error("Failed to load sample questions:", err);
+            }
+        }
+
+        // Execute Query
+        async function submitQuery() {
+            const input = document.getElementById('queryInput').value.trim();
+            if (!input) return;
+
+            const runBtn = document.getElementById('runBtn');
+            const statusCard = document.getElementById('statusCard');
+            const errorCard = document.getElementById('errorCard');
+            const sqlOutput = document.getElementById('sqlOutput');
+            const tableBody = document.getElementById('tableBody');
+            const tableHeader = document.getElementById('tableHeader');
+
+            // Set Loading UI
+            runBtn.disabled = true;
+            runBtn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Processing...</span>`;
+            lucide.createIcons();
+
+            statusCard.classList.add('hidden');
+            errorCard.classList.add('hidden');
+            sqlOutput.innerText = "-- Synthesizing query plan and generating SQL...";
+            tableBody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-400 animate-pulse">Running semantic routing and executing federated queries...</td></tr>`;
+
+            try {
+                const res = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question: input })
+                });
+
+                const data = await res.json();
+                currentResults = data.rows || [];
+                currentColumns = data.columns || [];
+
+                if (data.sql) {
+                    sqlOutput.innerText = data.sql;
+                }
+
+                if (data.error) {
+                    errorCard.classList.remove('hidden');
+                    document.getElementById('errorMessage').innerText = data.error;
+                    tableBody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-rose-400">Query execution failed. See error details above.</td></tr>`;
+                } else {
+                    statusCard.classList.remove('hidden');
+                    document.getElementById('statusTitle').innerText = "Query Executed Successfully";
+                    document.getElementById('statusSubtitle').innerText = `${data.row_count} rows returned`;
+                    document.getElementById('latencyBadge').innerText = `${data.latency_ms} ms`;
+
+                    renderTable(data.columns, data.rows);
+                }
+
+            } catch (err) {
+                errorCard.classList.remove('hidden');
+                document.getElementById('errorMessage').innerText = err.message;
+            } finally {
+                runBtn.disabled = false;
+                runBtn.innerHTML = `<i data-lucide="play" class="w-4 h-4 fill-white"></i><span>Execute Query</span>`;
+                lucide.createIcons();
+            }
+        }
+
+        function renderTable(columns, rows) {
+            const tableHeader = document.getElementById('tableHeader');
+            const tableBody = document.getElementById('tableBody');
+
+            if (!rows || rows.length === 0) {
+                tableHeader.innerHTML = `<th class="p-3">Result</th>`;
+                tableBody.innerHTML = `<tr><td class="p-8 text-center text-slate-500">(No rows matched your query)</td></tr>`;
+                return;
+            }
+
+            // Header
+            tableHeader.innerHTML = columns.map(col => `<th class="p-3 font-semibold text-slate-300 uppercase tracking-wider text-[11px]">${col}</th>`).join('');
+
+            // Rows
+            tableBody.innerHTML = rows.map((row, idx) => {
+                const bg = idx % 2 === 0 ? 'bg-slate-900/30' : 'bg-slate-950/60';
+                return `<tr class="${bg} hover:bg-indigo-950/20 transition">` +
+                    columns.map(col => `<td class="p-3 text-slate-200 whitespace-nowrap">${row[col] !== undefined ? row[col] : ''}</td>`).join('') +
+                `</tr>`;
+            }).join('');
+        }
+
+        function clearInput() {
+            document.getElementById('queryInput').value = '';
+            document.getElementById('sqlOutput').innerText = '-- Enter a question and click \'Execute Query\'';
+            document.getElementById('tableBody').innerHTML = '<tr><td colspan="2" class="p-8 text-center text-slate-500">No data to display. Run a query to view results.</td></tr>';
+            document.getElementById('statusCard').classList.add('hidden');
+            document.getElementById('errorCard').classList.add('hidden');
+        }
+
+        function copySQL() {
+            const sql = document.getElementById('sqlOutput').innerText;
+            navigator.clipboard.writeText(sql);
+            const copyBtnText = document.getElementById('copyBtnText');
+            copyBtnText.innerText = "Copied!";
+            setTimeout(() => copyBtnText.innerText = "Copy", 2000);
+        }
+
+        function exportCSV() {
+            if (!currentResults.length) return alert("No query results to export!");
+            const headers = currentColumns.join(",");
+            const rows = currentResults.map(r => currentColumns.map(c => JSON.stringify(r[c] || "")).join(",")).join("\n");
+            const blob = new Blob([headers + "\n" + rows], { type: "text/csv" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "query_results.csv";
+            a.click();
+        }
+
+        function exportJSON() {
+            if (!currentResults.length) return alert("No query results to export!");
+            const blob = new Blob([JSON.stringify(currentResults, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "query_results.json";
+            a.click();
+        }
+
+        // Ctrl + Enter shortcut
+        document.getElementById('queryInput').addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                submitQuery();
+            }
+        });
+
+        // Initialize on load
+        window.onload = () => {
+            lucide.createIcons();
+            loadSampleQueries();
+        };
+    </script>
+</body>
+</html>

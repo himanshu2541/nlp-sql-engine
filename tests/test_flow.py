@@ -38,17 +38,21 @@ def test_full_application_flow():
     llm = SmartMockLLM(settings)  # Returns "SELECT * FROM users"
     embedder = MockEmbeddingAdapter(settings)  # Returns dummy vectors
 
+    from nlp_sql_engine.infra.database.manager import DatabaseManager
+    from nlp_sql_engine.infra.vector_store.local_store import LocalVectorStore
+
+    manager = DatabaseManager()
+    manager.register_adapter("default", db)
+    vector_store = LocalVectorStore(embedder=embedder)
+
     # ---------------------------------------------------------
     # 2. SERVICE LAYER SETUP
     # ---------------------------------------------------------
     print(" [3/5] Initializing Services & Router...")
 
     # Initialize Router and Index the Table
-    router = SchemaRouter(db, embedder)
-    router.index_tables()  # <--- CRITICAL: This pulls schema from DB
-
-    # Verify Router actually found our table
-    assert "users" in router._table_schemas, "Router failed to index 'users' table!"
+    router = SchemaRouter(manager, vector_store, settings)
+    router.index_tables()
 
     steps = [
         PlanningStep(llm=llm, role_name="Planner"),
@@ -61,7 +65,8 @@ def test_full_application_flow():
     # 3. USE CASE (The Application)
     # ---------------------------------------------------------
     print(" [4/5] Building Use Case...")
-    app = AskQuestionUseCase(db, pipeline_service, router)
+    app = AskQuestionUseCase(manager, pipeline_service, router)
+
 
     # ---------------------------------------------------------
     # 4. EXECUTION

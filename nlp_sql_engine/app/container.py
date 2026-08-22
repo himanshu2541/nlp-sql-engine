@@ -50,9 +50,10 @@ class AppContainer:
         embedder = InfrastructureFactory.create_embedding(
             provider=settings.EMBEDDING_PROVIDER,
             model_name=settings.EMBEDDING_MODEL_NAME,
-            api_key=settings.EMBEDDING_API_KEY,
+            api_key=settings.resolved_embedding_api_key,
             base_url=settings.EMBEDDING_BASE_URL,
         )
+
 
         vector_store = InfrastructureFactory.create_vector_store(
             provider=settings.VECTOR_STORE_PROVIDER, embedder=embedder

@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 @ProviderRegistry.register_llm("openai")
+@ProviderRegistry.register_llm("openrouter")
 class OpenAIAdapter(ILLMProvider):
     def __init__(
         self, api_key: str, model_name: str, temperature: float, **kwargs: Any
@@ -18,16 +19,21 @@ class OpenAIAdapter(ILLMProvider):
         self.api_key = api_key
         self.model = model_name
         self.temperature = temperature
+        self.base_url = kwargs.get("base_url")
 
         if not self.api_key:
             logger.error("API_KEY IS NOT SET.")
             raise ValueError("API KEY is not set.")
 
-        # intialize the client
+        # initialize the client
         self.client = ChatOpenAI(
-            api_key=lambda: self.api_key, model=self.model, temperature=self.temperature
+            api_key=lambda: self.api_key,
+            model=self.model,
+            temperature=self.temperature,
+            base_url=self.base_url,
         )
 
     def invoke(self, messages: List[Tuple[str, str]]) -> str:
         response = self.client.invoke(messages)
         return cast(str, response.content)
+
